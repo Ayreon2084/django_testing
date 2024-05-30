@@ -54,7 +54,7 @@ def test_availability_for_comment_edit_and_delete(
         ('news:delete', pytest.lazy_fixture('comment_id'))
     )
 )
-def test_redirect_for_anonymous_client(
+def test_redirect_for_unauthorized_client(
     client,
     name,
     args
