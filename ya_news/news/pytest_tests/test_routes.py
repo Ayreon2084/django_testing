@@ -46,6 +46,7 @@ def test_availability_for_comment_edit_and_delete(
     response = parametrized_client.get(url)
     assert response.status_code == expected_status
 
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'name, args',
