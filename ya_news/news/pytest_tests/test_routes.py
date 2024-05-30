@@ -64,4 +64,3 @@ def test_redirect_for_anonymous_client(
     expected_url = f'{login_url}?next={url}'
     response = client.get(url)
     assertRedirects(response, expected_url)
-
