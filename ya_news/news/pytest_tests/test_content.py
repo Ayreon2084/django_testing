@@ -34,6 +34,7 @@ def test_comments_order(client, news, list_of_comments):
     sorted_dates = sorted(all_dates)
     assert all_dates == sorted_dates
 
+
 @pytest.mark.django_db
 @pytest.mark.parametrize(
     'parametrized_client, form_in_list',
@@ -42,12 +43,13 @@ def test_comments_order(client, news, list_of_comments):
         (pytest.lazy_fixture('client'), False)
     )
 )
-def test_anonymous_client_has_no_form(
+def test_unauthorized_client_has_no_form(
     parametrized_client,
     form_in_list,
     comment
 ):
     url = reverse('news:detail', args=(comment.id,))
     response = parametrized_client.get(url)
-    print(response.context)
     assert ('form' in response.context) is form_in_list
+    if 'form' in response.context:
+        assert isinstance(response.context['form'], CommentForm)
