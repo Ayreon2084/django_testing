@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from notes.forms import NoteForm
@@ -15,9 +15,13 @@ class TestContent(TestCase):
         cls.author = User.objects.create(
             username='Author',
         )
+        cls.author_client = Client()
+        cls.author_client.force_login(cls.author)
         cls.auth_user = User.objects.create(
             username='Random user',
         )
+        cls.auth_user_client = Client()
+        cls.auth_user_client.force_login(cls.auth_user)
         cls.note = Note.objects.create(
             title='Title',
             text='Text',
@@ -37,29 +41,25 @@ class TestContent(TestCase):
 
     def test_create_note_form_available_for_authorized_users(self):
         url = reverse('notes:add')
-        self.client.force_login(self.auth_user)
-        response = self.client.get(url)
+        response = self.auth_user_client.get(url)
         self.assertIn('form', response.context)
         self.assertIsInstance(response.context['form'], NoteForm)
 
     def test_edit_note_form_available_for_author(self):
         url = reverse('notes:edit', kwargs={'slug': self.note.slug})
-        self.client.force_login(self.author)
-        response = self.client.get(url)
+        response = self.author_client.get(url)
         self.assertIn('note', response.context)
         self.assertIn('form', response.context)
         self.assertIsInstance(response.context['form'], NoteForm)
 
     def test_note_in_list_for_author(self):
         url = reverse('notes:list')
-        self.client.force_login(self.author)
-        response = self.client.get(url)
+        response = self.author_client.get(url)
         object_list = response.context['object_list']
         assert self.note in object_list
 
     def test_note_not_in_list_for_authorized_user(self):
         url = reverse('notes:list')
-        self.client.force_login(self.auth_user)
-        response = self.client.get(url)
+        response = self.auth_user_client.get(url)
         object_list = response.context['object_list']
         assert self.note not in object_list

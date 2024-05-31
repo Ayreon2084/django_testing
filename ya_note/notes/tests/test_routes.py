@@ -2,7 +2,7 @@ from http import HTTPStatus
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from notes.models import Note
@@ -17,9 +17,13 @@ class TestRoutes(TestCase):
         cls.author = User.objects.create(
             username='Author',
         )
+        cls.author_client = Client()
+        cls.author_client.force_login(cls.author)
         cls.auth_user = User.objects.create(
             username='Random user',
         )
+        cls.auth_user_client = Client()
+        cls.auth_user_client.force_login(cls.auth_user)
         cls.note = Note.objects.create(
             title='Title',
             text='Text',
@@ -50,8 +54,7 @@ class TestRoutes(TestCase):
         for name in urls:
             with self.subTest(name=name):
                 url = reverse(name)
-                self.client.force_login(self.auth_user)
-                response = self.client.get(url)
+                response = self.auth_user_client.get(url)
                 self.assertEqual(response.status_code, HTTPStatus.OK)
 
     def test_availability_for_note_edit_delete_detail(self):
@@ -62,16 +65,15 @@ class TestRoutes(TestCase):
         )
 
         user_statuses = (
-            (self.author, HTTPStatus.OK),
-            (self.auth_user, HTTPStatus.NOT_FOUND),
+            (self.author, self.author_client, HTTPStatus.OK),
+            (self.auth_user, self.auth_user_client, HTTPStatus.NOT_FOUND),
         )
 
-        for user, status in user_statuses:
-            self.client.force_login(user)
+        for user, client, status in user_statuses:
             for name, kwargs in urls:
                 with self.subTest(user=user, name=name):
                     url = reverse(name, kwargs={'slug': kwargs})
-                    response = self.client.get(url)
+                    response = client.get(url)
                     self.assertEqual(response.status_code, status)
 
     def test_redirects_for_unauthorized_user(self):
