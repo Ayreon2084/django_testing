@@ -12,8 +12,8 @@ def test_news_count(client, list_of_news):
     url = reverse('news:home')
     response = client.get(url)
     assert response.status_code == HTTPStatus.OK
-    object_list = response.context['object_list']
-    news_count = object_list.count()
+    news_list = response.context['object_list']
+    news_count = news_list.count()
     assert news_count == settings.NEWS_COUNT_ON_HOME_PAGE
 
 
@@ -36,8 +36,8 @@ def test_comments_order(client, news, list_of_comments):
     url = reverse('news:detail', args=(news.id,))
     response = client.get(url)
     assert response.status_code == HTTPStatus.OK
-    news = response.context['news']
-    comments_list = list(news.comment_set.all())
+    piece_of_news = response.context['news']
+    comments_list = list(piece_of_news.comment_set.all())
     sorted_comments = sorted(
         comments_list,
         key=lambda comments: comments.created
