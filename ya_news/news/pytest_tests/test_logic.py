@@ -17,7 +17,8 @@ def test_unauthorized_user_cant_create_comment(
     post_comment
 ):
     url = reverse('news:detail', args=(news.id,))
-    client.post(url, data=post_comment)
+    response = client.post(url, data=post_comment)
+    response.status_code == HTTPStatus.FOUND
     assert Comment.objects.count() == 0
 
 
@@ -28,7 +29,8 @@ def test_authorized_user_can_create_comment(
     post_comment
 ):
     url = reverse('news:detail', args=(news.id,))
-    auth_user_client.post(url, data=post_comment)
+    response = auth_user_client.post(url, data=post_comment)
+    assert response.status_code == HTTPStatus.FOUND
     comments_count = Comment.objects.count()
     assert comments_count == 1
     comment = Comment.objects.get()
@@ -46,6 +48,7 @@ def test_user_cant_use_bad_words(
         'text': f'Tests is the most {choice(BAD_WORDS)} boring topic!'
     }
     response = auth_user_client.post(url, data=comment_with_bad_words)
+    assert response.status_code == HTTPStatus.OK
     assertFormError(
         response,
         form='form',
@@ -65,6 +68,7 @@ def test_author_can_delete_comment(
     delete_comment_url = reverse('news:delete', args=(comment.id,))
     url_to_comment = detail_url + '#comments'
     response = author_client.delete(delete_comment_url)
+    assert response.status_code == HTTPStatus.FOUND
     assertRedirects(response, url_to_comment)
     comments_count = Comment.objects.count()
     assert comments_count == 0
@@ -103,6 +107,7 @@ def test_author_can_edit_comment(
     edit_comment_url = reverse('news:edit', args=(comment.id,))
     url_to_comments = detail_url + '#comments'
     response = author_client.post(edit_comment_url, data=post_comment)
+    assert response.status_code == HTTPStatus.FOUND
     assertRedirects(response, url_to_comments)
     comment.refresh_from_db()
     assert comment.text == post_comment['text']
