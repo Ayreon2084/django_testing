@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.conf import settings
 from django.urls import reverse
 import pytest
@@ -9,6 +11,7 @@ from news.forms import CommentForm
 def test_news_count(client, list_of_news):
     url = reverse('news:home')
     response = client.get(url)
+    assert response.status_code == HTTPStatus.OK
     object_list = response.context['object_list']
     news_count = object_list.count()
     assert news_count == settings.NEWS_COUNT_ON_HOME_PAGE
@@ -18,21 +21,28 @@ def test_news_count(client, list_of_news):
 def test_news_order(client, list_of_news):
     url = reverse('news:home')
     response = client.get(url)
-    object_list = response.context['object_list']
-    all_dates = [news.date for news in object_list]
-    sorted_dates = sorted(all_dates, reverse=True)
-    assert sorted_dates == all_dates
+    assert response.status_code == HTTPStatus.OK
+    news_list = list(response.context['object_list'])
+    sorted_news = sorted(
+        news_list,
+        key=lambda news: news.date,
+        reverse=True
+    )
+    assert sorted_news == news_list
 
 
 @pytest.mark.django_db
 def test_comments_order(client, news, list_of_comments):
     url = reverse('news:detail', args=(news.id,))
     response = client.get(url)
-    object_list = response.context['news']
-    comments = object_list.comment_set.all()
-    all_dates = [comment.created for comment in comments]
-    sorted_dates = sorted(all_dates)
-    assert all_dates == sorted_dates
+    assert response.status_code == HTTPStatus.OK
+    news = response.context['news']
+    comments_list = list(news.comment_set.all())
+    sorted_comments = sorted(
+        comments_list,
+        key=lambda comments: comments.created
+    )
+    assert sorted_comments == comments_list
 
 
 @pytest.mark.django_db
@@ -50,6 +60,7 @@ def test_unauthorized_client_has_no_form(
 ):
     url = reverse('news:detail', args=(comment.id,))
     response = parametrized_client.get(url)
+    assert response.status_code == HTTPStatus.OK
     assert ('form' in response.context) is form_in_list
     if 'form' in response.context:
         assert isinstance(response.context['form'], CommentForm)
