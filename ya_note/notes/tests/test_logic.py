@@ -33,6 +33,12 @@ class TestNoteCreation(TestCase):
         cls.url = reverse('notes:add')
         cls.redirect_url = reverse('notes:success')
 
+    def check_note_equal(self, note: Note, data: dict, user):
+        self.assertEqual(note.title, data['title'])
+        self.assertEqual(note.text, data['text'])
+        self.assertEqual(note.slug, data['slug'])
+        self.assertEqual(note.author, user)
+
     def test_unauthorized_user_cant_create_note(self):
         self.client.post(self.url, data=self.data_with_slug)
         notes_count = Note.objects.count()
@@ -45,10 +51,7 @@ class TestNoteCreation(TestCase):
         notes_count = Note.objects.count()
         self.assertEqual(notes_count, 1)
         note = Note.objects.get()
-        self.assertEqual(note.title, self.data_with_slug['title'])
-        self.assertEqual(note.text, self.data_with_slug['text'])
-        self.assertEqual(note.slug, self.data_with_slug['slug'])
-        self.assertEqual(note.author, self.user)
+        self.check_note_equal(note, self.data_with_slug, self.user)
 
     def test_authorized_user_cant_use_same_slug(self):
         self.note = Note.objects.create(
@@ -122,14 +125,22 @@ class TestNoteEditdelete(TestCase):
         )
         cls.redirect_url = reverse('notes:success')
 
+    def check_note_equal(self, note: Note, data: dict):
+        self.assertEqual(note.title, data['title'])
+        self.assertEqual(note.text, data['text'])
+        self.assertEqual(note.slug, data['slug'])
+
+    def check_note_not_equal(self, note: Note, data: dict):
+        self.assertNotEqual(note.title, data['title'])
+        self.assertNotEqual(note.text, data['text'])
+        self.assertNotEqual(note.slug, data['slug'])
+
     def test_author_can_edit_note(self):
         response = self.author_client.post(self.note_edit_url, self.new_data)
         self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.redirect_url)
         self.note.refresh_from_db()
-        self.assertEqual(self.note.title, self.new_data['title'])
-        self.assertEqual(self.note.text, self.new_data['text'])
-        self.assertEqual(self.note.slug, self.new_data['slug'])
+        self.check_note_equal(self.note, self.new_data)
 
     def test_authorized_user_cant_edit_note_of_another_author(self):
         response = self.auth_user_client.post(
@@ -138,9 +149,7 @@ class TestNoteEditdelete(TestCase):
         )
         self.assertEqual(response.status_code, HTTPStatus.NOT_FOUND)
         self.note.refresh_from_db()
-        self.assertNotEqual(self.note.title, self.new_data['title'])
-        self.assertNotEqual(self.note.text, self.new_data['text'])
-        self.assertNotEqual(self.note.slug, self.new_data['slug'])
+        self.check_note_not_equal(self.note, self.new_data)
 
     def test_author_can_delete_note(self):
         response = self.author_client.delete(self.note_delete_url)
