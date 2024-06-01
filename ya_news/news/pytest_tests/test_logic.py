@@ -40,8 +40,8 @@ def test_authorized_user_can_create_comment(
 
 
 def test_user_cant_use_bad_words(
-        auth_user_client,
-        news
+    auth_user_client,
+    news
 ):
     url = reverse('news:detail', args=(news.id,))
     comment_with_bad_words = {
@@ -60,9 +60,9 @@ def test_user_cant_use_bad_words(
 
 
 def test_author_can_delete_comment(
-        author_client,
-        news,
-        comment
+    author_client,
+    news,
+    comment
 ):
     detail_url = reverse('news:detail', args=(news.id,))
     delete_comment_url = reverse('news:delete', args=(comment.id,))
@@ -75,8 +75,8 @@ def test_author_can_delete_comment(
 
 
 def test_user_cant_delete_comment_of_another_user(
-        auth_user_client,
-        comment
+    auth_user_client,
+    comment
 ):
     delete_comment_url = reverse('news:delete', args=(comment.id,))
     response = auth_user_client.delete(delete_comment_url)
@@ -98,10 +98,10 @@ def test_unauthorized_user_cant_delete_comment(
 
 
 def test_author_can_edit_comment(
-        author_client,
-        comment,
-        news,
-        post_comment
+    author_client,
+    comment,
+    news,
+    post_comment
 ):
     detail_url = reverse('news:detail', args=(news.id,))
     edit_comment_url = reverse('news:edit', args=(comment.id,))
@@ -114,9 +114,9 @@ def test_author_can_edit_comment(
 
 
 def test_user_cant_edit_comment_of_another_user(
-        auth_user_client,
-        comment,
-        post_comment
+    auth_user_client,
+    comment,
+    post_comment
 ):
     edit_comment_url = reverse('news:edit', args=(comment.id,))
     current_comment_text = comment.text
@@ -128,9 +128,9 @@ def test_user_cant_edit_comment_of_another_user(
 
 @pytest.mark.django_db
 def test_unauthorized_user_cant_edit_comment(
-        client,
-        comment,
-        post_comment
+    client,
+    comment,
+    post_comment
 ):
     edit_comment_url = reverse('news:edit', args=(comment.id,))
     current_comment_text = comment.text
