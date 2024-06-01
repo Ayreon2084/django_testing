@@ -14,10 +14,13 @@ User = get_user_model()
 class TestNoteCreation(TestCase):
 
     @classmethod
-    def setUpTestData(cls):
-        cls.user = User.objects.create(username='User')
+    def setUp(cls):
         cls.auth_client = Client()
         cls.auth_client.force_login(cls.user)
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = User.objects.create(username='User')
         cls.data_with_slug = {
             'title': 'Title',
             'text': 'Text',
@@ -37,6 +40,7 @@ class TestNoteCreation(TestCase):
 
     def test_authorized_user_can_create_note(self):
         response = self.auth_client.post(self.url, data=self.data_with_slug)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.redirect_url)
         notes_count = Note.objects.count()
         self.assertEqual(notes_count, 1)
@@ -59,6 +63,7 @@ class TestNoteCreation(TestCase):
             'slug': self.note.slug,
         }
         response = self.auth_client.post(self.url, data=new_data)
+        self.assertEqual(response.status_code, HTTPStatus.OK)
         self.assertFormError(
             response,
             form='form',
@@ -70,6 +75,7 @@ class TestNoteCreation(TestCase):
 
     def test_authorized_user_dont_fill_in_slug_field(self):
         response = self.auth_client.post(self.url, self.data_without_slug)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.redirect_url)
         notes_count = Note.objects.count()
         self.assertEqual(notes_count, 1)
@@ -81,13 +87,16 @@ class TestNoteCreation(TestCase):
 class TestNoteEditdelete(TestCase):
 
     @classmethod
-    def setUpTestData(cls):
-        cls.author = User.objects.create(username='Author')
+    def setUp(cls):
         cls.author_client = Client()
         cls.author_client.force_login(cls.author)
-        cls.auth_user = User.objects.create(username='Random user')
         cls.auth_user_client = Client()
         cls.auth_user_client.force_login(cls.auth_user)
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.author = User.objects.create(username='Author')
+        cls.auth_user = User.objects.create(username='Random user')
         cls.note = Note.objects.create(
             title='Title',
             text='Text',
@@ -115,6 +124,7 @@ class TestNoteEditdelete(TestCase):
 
     def test_author_can_edit_note(self):
         response = self.author_client.post(self.note_edit_url, self.new_data)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.redirect_url)
         self.note.refresh_from_db()
         self.assertEqual(self.note.title, self.new_data['title'])
@@ -134,6 +144,7 @@ class TestNoteEditdelete(TestCase):
 
     def test_author_can_delete_note(self):
         response = self.author_client.delete(self.note_delete_url)
+        self.assertEqual(response.status_code, HTTPStatus.FOUND)
         self.assertRedirects(response, self.redirect_url)
         notes_count = Note.objects.count()
         self.assertEqual(notes_count, 0)

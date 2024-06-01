@@ -13,17 +13,20 @@ User = get_user_model()
 class TestRoutes(TestCase):
 
     @classmethod
+    def setUp(cls):
+        cls.author_client = Client()
+        cls.author_client.force_login(cls.author)
+        cls.auth_user_client = Client()
+        cls.auth_user_client.force_login(cls.auth_user)
+
+    @classmethod
     def setUpTestData(cls):
         cls.author = User.objects.create(
             username='Author',
         )
-        cls.author_client = Client()
-        cls.author_client.force_login(cls.author)
         cls.auth_user = User.objects.create(
             username='Random user',
         )
-        cls.auth_user_client = Client()
-        cls.auth_user_client.force_login(cls.auth_user)
         cls.note = Note.objects.create(
             title='Title',
             text='Text',
@@ -92,4 +95,5 @@ class TestRoutes(TestCase):
                 url = reverse(name, kwargs=kwargs)
                 redirect_url = f'{login_url}?next={url}'
                 response = self.client.get(url)
+                self.assertEqual(response.status_code, HTTPStatus.FOUND)
                 self.assertRedirects(response, redirect_url)
